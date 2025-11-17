@@ -1,0 +1,36 @@
+
+node ring_buffer<<n : int>>(e : int; w, r : bool) returns (o : int)
+var r_idx, w_idx : int; pa, a : int^n;
+let
+    o = a.[r_idx] default 0;
+    pa = (0^n) fby a;
+    a = if w then [ pa with [w_idx] = e ] else pa;
+    r_idx = 0 fby (((if r then 1 else 0) + r_idx) % n);
+    w_idx = 0 fby (((if w then 1 else 0) + w_idx) % n);
+tel
+
+node test_buffer() returns (r1 : bool; o1 : int; r2 : bool; o2 : int)
+var e : int; w : bool;
+let
+    e = 0 fby (e + 1);
+    w = true fby true fby false fby false fby w;
+    r1 = false fby false fby true fby true fby r1;
+    o1 = ring_buffer<<2>>(e, w, r1);
+    r2 = true fby false fby r2;
+    o2 = ring_buffer<<1>>(e, w, r2);
+tel
+
+node f(x: bool) returns (o: int)
+let
+  automaton
+    state A
+      do o = 0 fby (o + 1)
+      unless x continue B 
+      (* unless 是强转化，在do之前进行 *)
+    state B
+      do o = 1 fby (2 * o)
+      until x continue A
+      (* until 是弱转换， 在do之后进行 *)
+      (* 但是用的continue 所以会保持变量的值 *)
+end
+tel

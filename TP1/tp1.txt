@@ -1,0 +1,3 @@
+heptc -target c -s somme(node) tp1.ept 
+gcc -I `heptc -where`/c -o somme(node) *.c
+hept -s node -m 10 -t tp1.ept 

@@ -1,0 +1,117 @@
+node n1(x: float) returns (y: float) 
+let
+    y = x *. x +. 1.0;
+tel
+
+node n2(x,y: bool) returns (z,t: bool) 
+let 
+    z= if x then y else false; 
+    t= if x 
+        then (if y 
+            then false 
+            else true
+            ) 
+        else (if y 
+            then true 
+            else false); 
+tel
+
+node somme(x: int) returns (o: int) 
+let
+    o = x + 0 fby o;
+tel
+
+node alarme_bornes(x : float; lo : float; hi : float) returns (alarme: bool)
+let
+    alarme = if (x <. lo) or (x >. hi) then true else false;
+tel
+
+node vitesse_temp(x : float) returns (y : float)
+let
+    y = 0.0 -> (x -. (pre x));
+tel
+
+node alarme_vit(x : float) returns (alarme : bool)
+let
+    alarme = alarme_bornes(vitesse_temp(x), (-.2.0), 2.0);
+    (*alarme = if (0.0 -> (x -. (pre x)) <. -.2.0) or (0.0 -> (x -. (pre x)) >. 2.0) then true else false;*)
+tel
+
+node jafter(x : bool) returns (y : bool)
+let
+    y = false -> pre x ;
+tel
+
+node min_flot(x : int) returns (y : int)
+let
+    y = x -> if x > pre y then pre y else x;
+tel
+
+node compteur_evt(e : bool) returns (c : int)
+let
+    c = (if e then 1 else 0) -> if e then pre c + 1 else 0;
+tel
+
+node switch2(orig, con, coff : bool) returns (statev : bool)
+let
+    statev = if con then true else (if coff then false else orig) -> if con then true else (if coff then false else pre statev);
+tel
+
+node hadd(x, y : bool) returns (cout, s : bool)
+let
+    cout = x and y;
+    s = (x and not y) or (not x and y);
+tel
+
+node fadd(cin, x, y : bool) returns (cout, s : bool)
+    var t : bool;
+let
+    cout = (x and y) or (cin and ((x and not y) or (not x and y)));
+    t = (x and not y) or (not x and y);
+    s = (t and not cin) or (not t and cin);
+tel
+
+node sadd(x, y : bool) returns (s : bool)
+let
+    s = (x and not y) or (not x and y);
+tel
+
+node alarme_vit_val(x : float) returns (alarme : bool)
+var alarme_vit,recent_vit1,recent_vit2,recent_vit3,alarme_x : bool;
+let
+    alarme_vit = alarme_vit(x);
+    recent_vit1 = false -> alarme_vit;  -- 上一个时刻的速度是否超出范围
+    recent_vit2 = false -> pre(recent_vit1);  -- 上上个时刻的速度是否超出范围
+    recent_vit3 = false -> pre(recent_vit2);  -- 上上上个时刻的速度是否超出范围
+    alarme_x = if (x <. -.10.0) or (x >. 35.0) then true else false;
+    alarme = recent_vit1 and recent_vit2 and recent_vit3 and alarme_x;
+tel
+
+node alarme_vit_val_2(x : float) returns (alarme : bool)
+var count : int; c : bool;
+let
+    c = (vitesse_temp(x) <. -.2.0 or vitesse_temp(x) >. 2.0);
+    count = 0 -> if c then pre count + 1 else 0;
+    alarme = (count >= 3) and ((x <. -.10.0) or (x >. 35.0));
+
+tel
+
+node compteur_evt_new(e : bool) returns (c : int)
+let
+    reset 
+        c = somme(if e then 1 else 0);
+        (* c = (if e then (1 fby somme(1)) else 0) *)
+    every not e
+tel
+
+node detecteur(mvt, onoff, hs: bool) returns (alarme: bool)
+var time : int; active : bool;
+let
+    
+    reset 
+        time = (0 fby time) + if hs then 10 else 0;
+    every not mvt and active;
+    alarme = ((time >= 50) or (false fby alarme)) and active;
+    active = false fby (active <> onoff)
+    
+tel
